@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset='utf-8' />
+  <title>Simple Web Worker</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+</head>
+
+<body>
+  <h2>Get the sum of input numbers</h2>
+  <input id="inputElem" type="text" size="50">
+  <input id="sumBtn" type="button" value="sum"/>
+  <script type="text/javascript">
+    var sumWorker = new Worker('./sum-worker.js');
+    var btnElem = document.getElementById('sumBtn');
+    var inputElem = document.getElementById('inputElem');
+
+    btnElem.addEventListener('click', function() {
+      sumWorker.postMessage(inputElem.value);
+    });
+    sumWorker.addEventListener('message', function(message) {
+      alert(message.data);
+    });
+  </script>
+</body>
+
+</html>
