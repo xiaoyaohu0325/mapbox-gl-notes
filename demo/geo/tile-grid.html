@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link type="text/css" href="./style.css" rel="stylesheet">
+  <title>Tile Grid</title>
+</head>
+<body>
+<canvas id="container"></canvas>
+<canvas id="text"></canvas>
+<script id="3d-vertex-shader" type="x-shader/x-vertex">
+  attribute vec4 a_position;
+  uniform mat4 u_matrix;
+
+  void main() {
+    gl_Position = u_matrix * a_position;
+  }
+</script>
+<script id="3d-fragment-shader" type="x-shader/x-fragment">
+  precision mediump float;
+
+  void main() {
+    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  }
+</script>
+<script type="text/javascript" src="../../node_modules/gl-matrix/dist/gl-matrix-min.js"></script>
+<script type="text/javascript" src="../lib/dat.gui.min.js"></script>
+<script type="text/javascript" src="../dist/tile_grid_app.bundle.js"></script>
+</body>
+</html>
