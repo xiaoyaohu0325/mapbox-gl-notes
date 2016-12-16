@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Single Vector Tile</title>
+</head>
+<body>
+<div>
+  zoom level: <input id="zInput" type="input" size="20" value="0">
+  column: <input id="colInput" type="input" size="20" value="0">
+  row: <input id="rowInput" type="input" size="20" value="0">
+  <input id="btn" type="button" value="Get Tile">
+</div>
+<canvas id="container" width="512" height="512"></canvas>
+<script id="3d-vertex-shader" type="x-shader/x-vertex">
+  attribute vec2 a_position;
+  uniform mat4 u_matrix;
+
+  void main() {
+    gl_Position = u_matrix*vec4(a_position.xy, 0, 1);
+  }
+</script>
+<script id="3d-fragment-shader" type="x-shader/x-fragment">
+  precision mediump float;
+
+  void main() {
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+  }
+</script>
+<script type="text/javascript" src="../../node_modules/gl-matrix/dist/gl-matrix-min.js"></script>
+<script type="text/javascript" src="../lib/dat.gui.min.js"></script>
+<script type="text/javascript" src="../dist/single_tile_app.bundle.js"></script>
+</body>
+</html>
