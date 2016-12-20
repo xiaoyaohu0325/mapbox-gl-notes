@@ -1,7 +1,8 @@
 module.exports = {
   entry: {
     single_tile_app: './demo/vt/single-tile-app',
-    tile_grid_app: './demo/geo/tile-grid-app'
+    tile_grid_app: './demo/geo/tile-grid-app',
+    layer_index: './demo/style/layer-index'
   },
   output: {
     path: "./demo/dist",

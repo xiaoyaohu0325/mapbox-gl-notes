@@ -24,7 +24,7 @@ export class Util {
    * @private
    */
   static clamp(n: number, min: number, max: number): number {
-      return Math.min(max, Math.max(min, n));
+    return Math.min(max, Math.max(min, n));
   }
 
   static interpolate(a, b, t) {
@@ -50,5 +50,19 @@ export class Util {
       }
     }
     return dest;
+  }
+
+  /*
+  * Polyfill for Object.values. Not fully spec compliant, but we don't
+  * need it to be.
+  *
+  * @private
+  */
+  static values(obj: Object): Array<string> {
+    const result = [];
+    for (const k in obj) {
+      result.push(obj[k]);
+    }
+    return result;
   }
 }
