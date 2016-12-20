@@ -1,6 +1,7 @@
 module.exports = {
   entry: {
     single_tile_app: './demo/vt/single-tile-app',
+    fill_tile_app: './demo/vt/fill-tile-app',
     tile_grid_app: './demo/geo/tile-grid-app',
     layer_index: './demo/style/layer-index'
   },

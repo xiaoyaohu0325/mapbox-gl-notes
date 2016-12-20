@@ -1,3 +1,5 @@
+import { Point } from '../geo/point';
+
 export class Util {
   /**
   * constrain n to the given range, excluding the minimum, via modular arithmetic
@@ -64,5 +66,22 @@ export class Util {
       result.push(obj[k]);
     }
     return result;
+  }
+
+  /**
+   * Returns the signed area for the polygon ring.  Postive areas are exterior rings and
+   * have a clockwise winding.  Negative areas are interior rings and have a counter clockwise
+   * ordering.
+   *
+   * @param ring Exterior or interior ring
+   */
+  static calculateSignedArea(ring: Array<Point>): number {
+    let sum = 0;
+    for (let i = 0, len = ring.length, j = len - 1, p1, p2; i < len; j = i++) {
+      p1 = ring[i];
+      p2 = ring[j];
+      sum += (p2.x - p1.x) * (p1.y + p2.y);
+    }
+    return sum;
   }
 }

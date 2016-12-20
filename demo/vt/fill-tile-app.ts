@@ -1,9 +1,12 @@
 import { mat4, vec4 } from 'gl-matrix';
 import { Tile } from './tile';
 import { WebGLBase } from '../util/webgl-base';
+import { classifyRings } from '../util/classify_rings';
 import { loadGeometry } from '../data/load_geometry';
+import earcut = require('earcut');
 
 const EXTENT = 8192, tileSize = 512;
+const EARCUT_MAX_RINGS = 500;
 
 interface DrawOptions {
   altitude: number;
@@ -13,10 +16,11 @@ interface DrawOptions {
   offsetY: number;
 }
 
-class SingleTileApp extends WebGLBase {
+class SingleTileFillApp extends WebGLBase {
   positionAttributeLocation: number;
   positionBuffer: WebGLBuffer;
   matrixUniformLoc: WebGLUniformLocation;
+  colorUniformLoc: WebGLUniformLocation;
   _vectorTile;
   drawOptions: DrawOptions;
   projMatrix: mat4;
@@ -24,6 +28,7 @@ class SingleTileApp extends WebGLBase {
   initialize() {
     this.matrixUniformLoc = this.gl.getUniformLocation(this.program, 'u_matrix');
     this.positionAttributeLocation = this.gl.getAttribLocation(this.program, 'a_position');
+    this.colorUniformLoc = this.gl.getUniformLocation(this.program, 'u_color');
 
     this.positionBuffer = this.gl.createBuffer();
 
@@ -59,7 +64,7 @@ class SingleTileApp extends WebGLBase {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
     // Turn on culling. By default backfacing triangles will be culled.
-    this.gl.enable(this.gl.CULL_FACE);
+    // this.gl.enable(this.gl.CULL_FACE);
     // Enable the depth buffer
     this.gl.enable(this.gl.DEPTH_TEST);
 
@@ -101,24 +106,48 @@ class SingleTileApp extends WebGLBase {
 
     let geometry = loadGeometry(vectorFeature);
 
-    for (let r = 0; r < geometry.length; r++) {
-      let buf = [];
-      const ring = geometry[r];
-      for (let p = 0; p < ring.length; p++) {
-        const point = ring[p];
-        buf.push(point.x);
-        buf.push(point.y);
+    this.drawPolygon(geometry);
+  }
+
+  drawPolygon(geometry) {
+    const polygons = classifyRings(geometry, EARCUT_MAX_RINGS);
+    for (const polygon of polygons) {
+      const flattened = [];
+      const holeIndices = [];
+
+      for (const ring of polygon) {
+        if (ring.length === 0) {
+          continue;
+        }
+
+        if (ring !== polygon[0]) {
+          holeIndices.push(flattened.length / 2);
+        }
+
+        for (let i = 0; i < ring.length; i++) {
+          flattened.push(ring[i].x);
+          flattened.push(ring[i].y);
+        }
       }
 
-      let data = new Uint16Array(buf);
-      // Bind Attribute
+      const indices = earcut(flattened, holeIndices);
+
       this.gl.enableVertexAttribArray(this.positionAttributeLocation);
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Uint16Array(flattened), this.gl.STATIC_DRAW);
       this.gl.vertexAttribPointer(
           this.positionAttributeLocation, 2, this.gl.UNSIGNED_SHORT, false, 0, 0);
 
-      this.gl.drawArrays(type, 0, ring.length);
+      this.gl.uniform4fv(this.colorUniformLoc, [0.0, 0.0, 1.0, 1.0]);
+
+      const elementBuffer = this.gl.createBuffer();
+      this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, elementBuffer);
+      this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
+      this.gl.drawElements(this.gl.TRIANGLES, indices.length, this.gl.UNSIGNED_SHORT, 0);
+
+      // draw outline
+      this.gl.uniform4fv(this.colorUniformLoc, [1.0, 0.0, 1.0, 0.0]);
+      this.gl.drawArrays(this.gl.LINE_STRIP, 0, flattened.length / 2);
     }
   }
 }
@@ -133,7 +162,7 @@ class SingleTileApp extends WebGLBase {
   let fragmentShaderSource = (<HTMLScriptElement>document.getElementById('3d-fragment-shader')).text;
 
   // Link the two shaders into a program
-  const app = new SingleTileApp(gl, vertexShaderSource, fragmentShaderSource);
+  const app = new SingleTileFillApp(gl, vertexShaderSource, fragmentShaderSource);
 
   const zInput = <HTMLInputElement>document.getElementById('zInput');
   const colInput = <HTMLInputElement>document.getElementById('colInput');
