@@ -1,8 +1,8 @@
 import { mat4, vec4 } from 'gl-matrix';
 import { WebGLBase } from '../util/webgl-base';
-import { Transform } from './transform';
-import { TileCoord } from './tile_coord';
-import { LngLat } from './lng_lat';
+import { Transform } from '../../src/geo/transform';
+import { TileCoord } from '../../src/geo/tile_coord';
+import { LngLat } from '../../src/geo/lng_lat';
 
 interface DrawOptions {
   altitude: number;

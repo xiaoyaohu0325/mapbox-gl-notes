@@ -1,4 +1,4 @@
-import { Ajax } from '../util/ajax';
+import { Ajax } from '../../src/util/ajax';
 import { VectorTile } from 'vector-tile';
 import Protobuf = require('pbf');
 

@@ -84,4 +84,13 @@ export class Util {
     }
     return sum;
   }
+
+  /**
+   * Determine if a string ends with a particular substring
+   *
+   * @private
+   */
+  static endsWith(value: string, suffix: string): boolean {
+      return value.indexOf(suffix, value.length - suffix.length) !== -1;
+  }
 }

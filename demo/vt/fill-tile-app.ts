@@ -1,8 +1,8 @@
 import { mat4, vec4 } from 'gl-matrix';
 import { Tile } from './tile';
 import { WebGLBase } from '../util/webgl-base';
-import { classifyRings } from '../util/classify_rings';
-import { loadGeometry } from '../data/load_geometry';
+import { classifyRings } from '../../src/util/classify_rings';
+import { loadGeometry } from '../../src/data/load_geometry';
 import earcut = require('earcut');
 
 const EXTENT = 8192, tileSize = 512;

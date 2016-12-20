@@ -1,6 +1,6 @@
-import { StyleLayerIndex } from './style_layer_index';
-import { Ajax } from '../util/ajax';
-import { StyleLayer } from './style_layer';
+import { StyleLayerIndex } from '../../src/style/style_layer_index';
+import { Ajax } from '../../src/util/ajax';
+import { StyleLayer } from '../../src/style/style_layer';
 import deref = require('mapbox-gl-style-spec/lib/deref');
 
 (() => {

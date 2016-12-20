@@ -1,9 +1,10 @@
 import { Ajax } from '../util/ajax';
 import { SourceCache } from '../source/source_cache';
 import { StyleLayer } from './style_layer';
+import { Evented } from '../util/evented';
 import deref = require('mapbox-gl-style-spec/lib/deref');
 
-export class Style {
+export class Style extends Evented {
   _layers;
   _order: string[];
   _loaded: boolean;
@@ -11,6 +12,8 @@ export class Style {
   stylesheet;
 
   constructor(styleurl: string) {
+    super();
+
     this._layers = {};
     this._order = [];
     this.sourceCaches = {};

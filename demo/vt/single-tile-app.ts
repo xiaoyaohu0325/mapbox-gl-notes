@@ -1,7 +1,7 @@
 import { mat4, vec4 } from 'gl-matrix';
 import { Tile } from './tile';
 import { WebGLBase } from '../util/webgl-base';
-import { loadGeometry } from '../data/load_geometry';
+import { loadGeometry } from '../../src/data/load_geometry';
 
 const EXTENT = 8192, tileSize = 512;
 
