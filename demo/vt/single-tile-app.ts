@@ -1,5 +1,7 @@
 import { mat4, vec4 } from 'gl-matrix';
-import { Tile } from './tile';
+import { Ajax } from '../../src/util/ajax';
+import { VectorTile } from 'vector-tile';
+import Protobuf = require('pbf');
 import { WebGLBase } from '../util/webgl-base';
 import { loadGeometry } from '../../src/data/load_geometry';
 
@@ -82,11 +84,7 @@ class SingleTileApp extends WebGLBase {
     this.gl.uniformMatrix4fv(this.matrixUniformLoc, false, this.projMatrix);
 
     let layerNames = Object.keys(this.vectorTile.layers)
-    layerNames.forEach((name) => {
-      if (name === 'Land') {
-        this.drawLayer(this.vectorTile.layers[name]);
-      }
-    });
+    this.drawLayer(this.vectorTile.layers['landcover'] || this.vectorTile.layers['water']);
   }
 
   drawLayer(vectorLayer) {
@@ -110,13 +108,13 @@ class SingleTileApp extends WebGLBase {
         buf.push(point.y);
       }
 
-      let data = new Uint16Array(buf);
+      let data = new Int16Array(buf);
       // Bind Attribute
       this.gl.enableVertexAttribArray(this.positionAttributeLocation);
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
       this.gl.bufferData(this.gl.ARRAY_BUFFER, data, this.gl.STATIC_DRAW);
       this.gl.vertexAttribPointer(
-          this.positionAttributeLocation, 2, this.gl.UNSIGNED_SHORT, false, 0, 0);
+          this.positionAttributeLocation, 2, this.gl.SHORT, false, 0, 0);
 
       this.gl.drawArrays(type, 0, ring.length);
     }
@@ -135,18 +133,18 @@ class SingleTileApp extends WebGLBase {
   // Link the two shaders into a program
   const app = new SingleTileApp(gl, vertexShaderSource, fragmentShaderSource);
 
-  const zInput = <HTMLInputElement>document.getElementById('zInput');
-  const colInput = <HTMLInputElement>document.getElementById('colInput');
-  const rowInput = <HTMLInputElement>document.getElementById('rowInput');
+  const tileSelect = <HTMLSelectElement>document.getElementById('tileSelect');
 
-  document.getElementById('btn').addEventListener('click', () => {
-    let tile = new Tile(+zInput.value, +colInput.value, +rowInput.value);
-    tile.loadTile((err, vectorTile) => {
-      if (err) {
-        alert(err.message || err);
-      } else {
-        app.vectorTile = vectorTile;
+  tileSelect.addEventListener('change', () => {
+    if (!tileSelect.value) {
+      return;
+    }
+    Ajax.getArrayBuffer(`http://localhost:3000/demo/tile-data/${tileSelect.value}.pbf`, (error, arrayBuffer) => {
+      if (error) {
+        alert(error.message || error);
       }
+      const vectorTile = new VectorTile(new Protobuf(arrayBuffer));
+      app.vectorTile = vectorTile;
     });
   });
 

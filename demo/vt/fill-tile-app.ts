@@ -1,8 +1,10 @@
 import { mat4, vec4 } from 'gl-matrix';
-import { Tile } from './tile';
 import { WebGLBase } from '../util/webgl-base';
 import { classifyRings } from '../../src/util/classify_rings';
 import { loadGeometry } from '../../src/data/load_geometry';
+import { Ajax } from '../../src/util/ajax';
+import { VectorTile } from 'vector-tile';
+import Protobuf = require('pbf');
 import earcut = require('earcut');
 
 const EXTENT = 8192, tileSize = 512;
@@ -87,11 +89,7 @@ class SingleTileFillApp extends WebGLBase {
     this.gl.uniformMatrix4fv(this.matrixUniformLoc, false, this.projMatrix);
 
     let layerNames = Object.keys(this.vectorTile.layers)
-    layerNames.forEach((name) => {
-      if (name === 'Land') {
-        this.drawLayer(this.vectorTile.layers[name]);
-      }
-    });
+    this.drawLayer(this.vectorTile.layers['landcover'] || this.vectorTile.layers['water']);
   }
 
   drawLayer(vectorLayer) {
@@ -113,10 +111,14 @@ class SingleTileFillApp extends WebGLBase {
     const polygons = classifyRings(geometry, EARCUT_MAX_RINGS);
     for (const polygon of polygons) {
       const flattened = [];
+      const ringElements = [];
       const holeIndices = [];
 
       for (const ring of polygon) {
-        if (ring.length === 0) {
+        let rLength = ring.length;
+        let offset = flattened.length / 2;
+
+        if (rLength === 0) {
           continue;
         }
 
@@ -127,6 +129,13 @@ class SingleTileFillApp extends WebGLBase {
         for (let i = 0; i < ring.length; i++) {
           flattened.push(ring[i].x);
           flattened.push(ring[i].y);
+          if (i === 0) {
+            ringElements.push(offset + rLength  - 1);
+            ringElements.push(offset);
+          } else {
+            ringElements.push(offset + i - 1);
+            ringElements.push(offset + i);
+          }
         }
       }
 
@@ -134,9 +143,9 @@ class SingleTileFillApp extends WebGLBase {
 
       this.gl.enableVertexAttribArray(this.positionAttributeLocation);
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Uint16Array(flattened), this.gl.STATIC_DRAW);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Int16Array(flattened), this.gl.STATIC_DRAW);
       this.gl.vertexAttribPointer(
-          this.positionAttributeLocation, 2, this.gl.UNSIGNED_SHORT, false, 0, 0);
+          this.positionAttributeLocation, 2, this.gl.SHORT, false, 0, 0);
 
       this.gl.uniform4fv(this.colorUniformLoc, [0.0, 0.0, 1.0, 1.0]);
 
@@ -147,7 +156,10 @@ class SingleTileFillApp extends WebGLBase {
 
       // draw outline
       this.gl.uniform4fv(this.colorUniformLoc, [1.0, 0.0, 1.0, 0.0]);
-      this.gl.drawArrays(this.gl.LINE_STRIP, 0, flattened.length / 2);
+      const element2Buffer = this.gl.createBuffer();
+      this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, element2Buffer);
+      this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(ringElements), this.gl.STATIC_DRAW);
+      this.gl.drawElements(this.gl.LINES, ringElements.length, this.gl.UNSIGNED_SHORT, 0);
     }
   }
 }
@@ -164,18 +176,18 @@ class SingleTileFillApp extends WebGLBase {
   // Link the two shaders into a program
   const app = new SingleTileFillApp(gl, vertexShaderSource, fragmentShaderSource);
 
-  const zInput = <HTMLInputElement>document.getElementById('zInput');
-  const colInput = <HTMLInputElement>document.getElementById('colInput');
-  const rowInput = <HTMLInputElement>document.getElementById('rowInput');
+  const tileSelect = <HTMLSelectElement>document.getElementById('tileSelect');
 
-  document.getElementById('btn').addEventListener('click', () => {
-    let tile = new Tile(+zInput.value, +colInput.value, +rowInput.value);
-    tile.loadTile((err, vectorTile) => {
-      if (err) {
-        alert(err.message || err);
-      } else {
-        app.vectorTile = vectorTile;
+  tileSelect.addEventListener('change', () => {
+    if (!tileSelect.value) {
+      return;
+    }
+    Ajax.getArrayBuffer(`http://localhost:3000/demo/tile-data/${tileSelect.value}.pbf`, (error, arrayBuffer) => {
+      if (error) {
+        alert(error.message || error);
       }
+      const vectorTile = new VectorTile(new Protobuf(arrayBuffer));
+      app.vectorTile = vectorTile;
     });
   });
 

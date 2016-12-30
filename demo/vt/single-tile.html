@@ -6,12 +6,15 @@
 </head>
 <body>
 <div>
-  zoom level: <input id="zInput" type="input" size="20" value="0">
-  column: <input id="colInput" type="input" size="20" value="0">
-  row: <input id="rowInput" type="input" size="20" value="0">
-  <input id="btn" type="button" value="Get Tile">
+  <select id="tileSelect">
+    <option value="" selected>choose a tile</option>
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+  </select>
 </div>
-<canvas id="container" width="512" height="512"></canvas>
+<canvas id="container" width="600" height="600"></canvas>
 <script id="3d-vertex-shader" type="x-shader/x-vertex">
   attribute vec2 a_position;
   uniform mat4 u_matrix;
